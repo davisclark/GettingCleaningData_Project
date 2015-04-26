@@ -10,53 +10,63 @@ run_analysis <- function() {
                 unzip("directory.zip")
         }
         
-        xtrain<-read.table("UCI HAR Dataset/train/X_train.txt")
-        ytrain<-read.table("UCI HAR Dataset/train/y_train.txt")
-        ytest<-read.table("UCI HAR Dataset/test/y_test.txt")
-        xtest<-read.table("UCI HAR Dataset/test/X_test.txt")
-        stest<-read.table("UCI HAR Dataset/test/subject_test.txt")
-        strain<-read.table("UCI HAR Dataset/train/subject_train.txt")
-        alab<-read.table("UCI HAR Dataset/activity_labels.txt")
-        features<-read.table("UCI HAR Dataset/features.txt")
+        subjectTrain <- read.table("UCI HAR Dataset/train/subject_train.txt")
+        subjectTest <- read.table("UCI HAR Dataset/test/subject_test.txt")
+        
+        activityTrain <- read.table("UCI HAR Dataset/train/y_train.txt")
+        activityTest <- read.table("UCI HAR Dataset/test/y_test.txt")
+        
+        featuresTrain <- read.table("UCI HAR Dataset/train/X_train.txt")
+        featuresTest <- read.table("UCI HAR Dataset/test/X_test.txt")
+        
+        activityLabels <- read.table("UCI HAR Dataset/activity_labels.txt")
+        featureLabels <- read.table("UCI HAR Dataset/features.txt")
         
         ### Merge training and test sets to create one data set
-        y<-rbind(ytest,ytrain)
-        x<-rbind(xtest,xtrain)
-        s<-rbind(stest,strain)
+        subjects <- rbind(subjectTest, subjectTrain)
+        activities <- rbind(activityTest, activityTrain)
+        features <- rbind(featuresTest, featuresTrain)
         
-        data<-data.frame(s,y,x)
+        data <- data.frame(subjects, activities, features)
         
         ### Labels data set with descriptive variable name
-        names(data)<-tolower(c("subject","activity",as.character(features[,2])))
+        names(data) <- c("subject", "activity", as.character(featureLabels[, 2]))
         
         ### Replace numerical activity ID with descriptive activity ID
         i <- 1
-        
-        alab$V2<-tolower(alab$V2)
-        alab$V2<-gsub("_","",alab$V2)
-        alab$V2<-gsub("stairs","",alab$V2)
-        
-        for (a in alab$V2) {
-                data$activity<-gsub(i,alab$V2[[i]],data$activity)
-                i <- i+1
+        activityLabels$V2 <- tolower(activityLabels$V2)
+        activityLabels$V2 <- gsub("_", "", activityLabels$V2)
+        activityLabels$V2 <- gsub("stairs", "", activityLabels$V2)
+        for (a in activityLabels$V2) {
+                data$activity <- gsub(i, activityLabels$V2[[i]], data$activity)
+                i <- i + 1
         }
         
         ### Extracts measurements on mean and standard deviation
-        extract<-c(1:2,sort(
-                c(grep("mean\\(\\)",names(data)),
-                  grep("std\\(\\)",names(data)))))
-        data<-data[,extract]
-        names(data)<-tolower(gsub("\\)","",gsub("\\(","",names(data))))
-        names(data)<-gsub("mean","Mean",names(data))
-        names(data)<-gsub("std","Std",names(data))
-        names(data)<-gsub("\\-x","X",names(data))
-        names(data)<-gsub("\\-y","Y",names(data))
-        names(data)<-gsub("\\-z","Z",names(data))
-        names(data)<-gsub("\\-","",names(data))
+        extract<-c(1:2, sort(c(grep("mean\\(\\)", names(data)),
+                               grep("std\\(\\)", names(data)))))
+        dataExtract <- data[, extract]
+        names(dataExtract) <- gsub("\\)", "", gsub("\\(", "", names(dataExtract)))
+        names(dataExtract) <- tolower(gsub("\\-", "_", names(dataExtract)))
         
         ### Create a second, independent tidy data set with 
         ### average of each variable for each activity and each subject
-        melted<-melt(data,id.vars=c("subject","activity"))
-        summary<-dcast(melted, activity + subject ~ ... , mean)
+        melted <- melt(dataExtract, id.vars = c("subject", "activity"))
+        summary <- dcast(melted, subject + activity ~ ... , mean)
+        summary <- melt(summary, id.vars = c("subject", "activity"))
+        names(summary)[3:4] <- c("feature", "mean")
+        
+        index <- 1
+        summary$feature <- as.character(summary$feature)
+        for(i in summary$feature) {
+                measure <- strsplit(i, NULL)
+                measure[[1]][[2]] <- paste("_", measure[[1]][[2]], sep="")
+                summary$feature[index] <- sapply(measure, paste, collapse = "")
+                index <- index + 1
+        }
+        summary$feature <- as.factor(summary$feature)
+        
         write.table(summary, "./summary.txt", row.names = FALSE)
 }
+
+run_analysis()

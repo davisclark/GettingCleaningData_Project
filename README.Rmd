@@ -40,14 +40,16 @@ View(summary)
   
 ## run_analysis script design
 
-
+```{r config, echo=FALSE, message=FALSE}
+library(reshape2)
+library(dplyr)
+```
 
 The Human Activity Recognition dataset is composed of 10,299 observations and 561 attributes in total; run_analysis distills this set into a dataframe of 11,880 observations and 1 attribute, excluding our 3 factor columns.
 
 The data are derived from a subset of the HAR dataset and summarized by calculating the mean of each measurement observed for each activity per subject. The following will present the script's working process: 
 
-
-```r
+```{r, cache=TRUE}
 subjectTrain <- read.table("UCI HAR Dataset/train/subject_train.txt")
 subjectTest <- read.table("UCI HAR Dataset/test/subject_test.txt")
 activityTrain <- read.table("UCI HAR Dataset/train/y_train.txt")
@@ -60,8 +62,7 @@ featureLabels <- read.table("UCI HAR Dataset/features.txt")
 
 First, the HAR training and test subsets are rejoined through a series of `rbind()` commands, yielding a complete HAR dataframe: 
 
-
-```r
+```{r joining test & train}
 subjects <- rbind(subjectTest, subjectTrain)
 activities <- rbind(activityTest, activityTrain)
 features <- rbind(featuresTest, featuresTrain)     
@@ -70,8 +71,7 @@ data <- data.frame(subjects, activities, features)
 
 We substitute the activity IDs with labels that are readable:
 
-
-```r
+```{r activity labels}
 names(data) <- c("subject", "activity", as.character(featureLabels[, 2]))
         
 i <- 1    
@@ -86,8 +86,7 @@ for (a in activityLabels$V2) {
 
 Next, we extract the HAR mean and standard deviation signal estimates, bringing focus to our tidy data through a more limited feature set: 
 
-
-```r
+```{r extracting mean & std estimates}
 extract <- c(1:2, sort(c(grep("mean\\(\\)", names(data)), 
                          grep("std\\(\\)", names(data)))))
 dataExtract <- data[, extract]
@@ -95,16 +94,14 @@ dataExtract <- data[, extract]
 
 Note: we can quickly clean up our variable names before performing the final transformation:
 
-
-```r
+```{r formatting column names}
 names(dataExtract) <- gsub("\\)", "", gsub("\\(", "", names(dataExtract)))
 names(dataExtract) <- tolower(gsub("\\-", "_", names(dataExtract)))
 ```
 
 Then, we melt the HAR dataframe and cast an independent, tidy dataset, summarized by the mean of each variable per each activity per subject:
 
-
-```r
+```{r casting tidy dataset}
 melted <- melt(dataExtract, id.vars = c("subject", "activity"))
 summary <- dcast(melted, activity + subject ~ ... , mean)
 summary <- melt(summary, id.vars = c("subject", "activity"))
@@ -113,33 +110,9 @@ names(summary)[3:4] <- c("feature", "mean")
 
 And our tidy data is ready:
 
-
-```r
+```{r}
 head(summary, 6)
-```
-
-```
-##   subject activity         feature      mean
-## 1       1   laying tbodyacc_mean_x 0.2215982
-## 2       2   laying tbodyacc_mean_x 0.2813734
-## 3       3   laying tbodyacc_mean_x 0.2755169
-## 4       4   laying tbodyacc_mean_x 0.2635592
-## 5       5   laying tbodyacc_mean_x 0.2783343
-## 6       6   laying tbodyacc_mean_x 0.2486565
-```
-
-```r
 tail(summary, 6)
-```
-
-```
-##       subject  activity                  feature       mean
-## 11875      25 walkingup fbodybodygyrojerkmag_std -0.8410610
-## 11876      26 walkingup fbodybodygyrojerkmag_std -0.6698463
-## 11877      27 walkingup fbodybodygyrojerkmag_std -0.7517143
-## 11878      28 walkingup fbodybodygyrojerkmag_std -0.7048528
-## 11879      29 walkingup fbodybodygyrojerkmag_std -0.7564642
-## 11880      30 walkingup fbodybodygyrojerkmag_std -0.7913494
 ```
 
 *For more information about this dataset contact: davissclark@gmail.com*

@@ -13,23 +13,24 @@ The sensor acceleration signal, which has gravitational and body motion componen
 
 A vector of features was obtained, by calculating variables from the time domain (prefix `t-`) and frequency domain (prefix `f-`) of each window.
 
+##Code book  
 **For each record it is provided:**
 
-- An identifier of the subject who carried out the activity
-- An activity label
-- A feature factor, indicating the measurement summarized
-- A mean value, presenting the average measurement recorded for the particular subject, activity, feature combination
+- **subject**: an identifier of the subject who carried out the activity
+- **activity**: activity label
+- **feature**: a factor, indicating the measurement summarized
+- **mean**: a numerical value, indicating the mean of the feature measurement recorded for particular subject and activity
 
 **Notes**: variables are normalized and bounded within [-1,1]
 
-##Code book
+###Feature measurements
 
-###Domain
+####Domain
 
 - **t-**: time domain  
 - **f-**: frequency domain  
 
-###Signals  
+####Signal
  
 - **t_bodyacc**:  
 Time domain body acceleration signal  
@@ -98,16 +99,17 @@ Magnitude frequency domain body gyroscope signal
 Magnitude of frequency domain body gyroscope jerk signal  
 (produced using Fast Fourier Transform (FFT))  
   
-###Measurements
+####Measurement
+
 The set of measurements estimated from these signals are:  
 
 - **-mean-**: mean value  
 - **-std-**: standard deviation 
 
-###Feature syntax
+####Syntax
   
 **domain** _ **signal** _ **measure** _ **axial-direction**  
 
-For example:  
+Example:  
   
 - **t_bodyacc_mean_x**
